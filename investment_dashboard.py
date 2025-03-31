@@ -28,7 +28,7 @@ if uploaded_file:
             df = df.rename(columns={
                 "Account Name": "Investment Name",
                 "Total Investment": "Cost",
-                "Current Valuation": "Fair Value",
+                "Share of Valuation": "Fair Value",
                 "Valuation Date": "Date",
                 "Total Value": "Proceeds"
             })
