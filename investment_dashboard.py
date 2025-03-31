@@ -64,12 +64,18 @@ if uploaded_file:
             st.header("🔍 Filters")
             fund_filter = st.multiselect("Select Fund(s)", options=df["Fund Name"].unique(), default=df["Fund Name"].unique())
             year_range = st.slider("Select Year Range", int(df["Date"].dt.year.min()), int(df["Date"].dt.year.max()), (int(df["Date"].dt.year.min()), int(df["Date"].dt.year.max())))
-            min_moic, max_moic = st.slider("MOIC Range", float(df["MOIC"].min()), float(df["MOIC"].max()), (float(df["MOIC"].min()), float(df["MOIC"].max())))
+            min_moic = float(df["MOIC"].min())
+            max_moic = float(df["MOIC"].max())
+            if min_moic == max_moic:
+                min_moic -= 0.01
+                max_moic += 0.01
+            min_moic, max_moic = round(min_moic, 4), round(max_moic, 4)
+            moic_range = st.slider("MOIC Range", min_value=min_moic, max_value=max_moic, value=(min_moic, max_moic))
 
         df = df[(df["Fund Name"].isin(fund_filter)) &
                 (df["Date"].dt.year >= year_range[0]) &
                 (df["Date"].dt.year <= year_range[1]) &
-                (df["MOIC"] >= min_moic) & (df["MOIC"] <= max_moic)]
+                (df["MOIC"] >= moic_range[0]) & (df["MOIC"] <= moic_range[1])]
 
         irr_data = df[["Date", "Cost", "Proceeds", "Fair Value"]].copy()
         irr_data["Outflow"] = -irr_data["Cost"]
