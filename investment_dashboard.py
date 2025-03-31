@@ -18,13 +18,13 @@ if uploaded_file:
         xls = pd.ExcelFile(uploaded_file)
         sheet_names = xls.sheet_names
 
-        df_raw = pd.read_excel(uploaded_file, sheet_name=sheet_names[0], header=None)
-        headers = df_raw.iloc[1].astype(str).values
-        is_salesforce = any("Account Name" in h for h in headers)
+        preview_df = pd.read_excel(uploaded_file, sheet_name=sheet_names[0], header=None)
+        header_row = 2 if "Account Name" in preview_df.iloc[2].values else 0
+        df = pd.read_excel(uploaded_file, sheet_name=sheet_names[0], header=header_row)
+
+        is_salesforce = "Account Name" in df.columns
 
         if is_salesforce:
-            df_raw.columns = df_raw.iloc[1]
-            df = df_raw[2:].copy()
             df = df.rename(columns={
                 "Account Name": "Investment Name",
                 "Total Investment": "Cost",
@@ -43,7 +43,6 @@ if uploaded_file:
             df["Fund Name"] = df["Parent Account"] if "Parent Account" in df.columns else "Salesforce Import"
 
         else:
-            df = pd.read_excel(uploaded_file, sheet_name=sheet_names[0])
             possible_date_columns = [col for col in df.columns if isinstance(col, str) and ("date" in col.lower() or "year" in col.lower())]
             for col in possible_date_columns:
                 try:
@@ -56,8 +55,9 @@ if uploaded_file:
                 st.error("No date column found in standard Excel format.")
                 st.stop()
             df = df.dropna(subset=["Date"])
+            if "Fund Name" not in df.columns:
+                df["Fund Name"] = "Standard Import"
 
-        # ---- CONTINUE ANALYSIS ----
         df["MOIC"] = df["Fair Value"] / df["Cost"]
 
         with st.sidebar:
