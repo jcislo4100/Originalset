@@ -34,7 +34,10 @@ if uploaded_file:
             })
             df["Cost"] = pd.to_numeric(df["Cost"], errors="coerce")
             df["Fair Value"] = pd.to_numeric(df["Fair Value"], errors="coerce")
-            df["Proceeds"] = pd.to_numeric(df.get("Proceeds", 0), errors="coerce").fillna(0)
+            if "Proceeds" in df.columns:
+                df["Proceeds"] = pd.to_numeric(df["Proceeds"], errors="coerce").fillna(0)
+            else:
+                df["Proceeds"] = 0
             if "Date" not in df.columns:
                 st.error("Missing required 'Valuation Date' field in uploaded Salesforce file.")
                 st.stop()
@@ -142,3 +145,4 @@ if uploaded_file:
 
     except Exception as e:
         st.error(f"Error loading file: {e}")
+
