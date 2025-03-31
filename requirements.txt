@@ -1,6 +1,6 @@
-pandas
-numpy
-numpy-financial
-plotly
-openpyxl
-streamlit
+pandas>=2.0
+numpy>=1.24
+numpy-financial>=1.0
+plotly>=5.15
+openpyxl>=3.1
+streamlit>=1.30
