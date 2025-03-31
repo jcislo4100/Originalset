@@ -20,7 +20,6 @@ if uploaded_file:
 
         df = pd.read_excel(uploaded_file, sheet_name=sheet_names[0], header=None)
 
-        # Safer detection of Salesforce-style format
         headers = df.iloc[1].astype(str).values
         if any("Account Name" in h for h in headers):
             df.columns = df.iloc[1]
@@ -35,6 +34,9 @@ if uploaded_file:
             df["Cost"] = pd.to_numeric(df["Cost"], errors="coerce")
             df["Fair Value"] = pd.to_numeric(df["Fair Value"], errors="coerce")
             df["Proceeds"] = pd.to_numeric(df.get("Proceeds", 0), errors="coerce").fillna(0)
+            if "Date" not in df.columns:
+                st.error("Missing required 'Valuation Date' field in uploaded Salesforce file.")
+                st.stop()
             df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
             df = df.dropna(subset=["Date"])
             df["Fund Name"] = df["Parent Account"] if "Parent Account" in df.columns else "Salesforce Import"
@@ -48,6 +50,9 @@ if uploaded_file:
                         break
                 except:
                     continue
+            if "Date" not in df.columns:
+                st.error("No date column found in standard Excel format.")
+                st.stop()
             df = df.dropna(subset=["Date"])
 
         df["MOIC"] = df["Fair Value"] / df["Cost"]
