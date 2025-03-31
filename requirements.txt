@@ -1,6 +1,6 @@
-streamlit
 pandas
 numpy
-openpyxl
-numpy_financial
+numpy-financial
 plotly
+openpyxl
+streamlit
