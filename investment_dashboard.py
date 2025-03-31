@@ -30,7 +30,7 @@ if uploaded_file:
                 "Total Investment": "Cost",
                 "Share of Valuation": "Fair Value",
                 "Valuation Date": "Date",
-                "Total Value": "Proceeds"
+                "Parent Account": "Fund Name"
             })
             df["Cost"] = pd.to_numeric(df["Cost"], errors="coerce")
             df["Fair Value"] = pd.to_numeric(df["Fair Value"], errors="coerce")
@@ -40,7 +40,8 @@ if uploaded_file:
                 st.stop()
             df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
             df = df.dropna(subset=["Date"])
-            df["Fund Name"] = df["Parent Account"] if "Parent Account" in df.columns else "Salesforce Import"
+            if "Fund Name" not in df.columns:
+                df["Fund Name"] = "Salesforce Import"
 
         else:
             possible_date_columns = [col for col in df.columns if isinstance(col, str) and ("date" in col.lower() or "year" in col.lower())]
@@ -77,18 +78,17 @@ if uploaded_file:
                 (df["Date"].dt.year <= year_range[1]) &
                 (df["MOIC"] >= moic_range[0]) & (df["MOIC"] <= moic_range[1])]
 
-        irr_data = df[["Date", "Cost", "Proceeds", "Fair Value"]].copy()
-        irr_data["Outflow"] = -irr_data["Cost"]
-        irr_data["Inflow"] = irr_data["Proceeds"] + irr_data["Fair Value"]
-        cashflows = irr_data.groupby("Date").agg({"Outflow": "sum", "Inflow": "sum"})
-        cashflows_sorted = cashflows.sort_index()
-        cashflow_series = (cashflows_sorted["Outflow"] + cashflows_sorted["Inflow"]).tolist()
+        # Cash flow construction for IRR
+        today = datetime.today()
+        cashflow_df = pd.DataFrame()
+        cashflow_df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+        cashflow_df["Cash Flow"] = -df["Cost"]
+        # Append fair value as final inflow
+        cashflow_df = cashflow_df.append({"Date": today, "Cash Flow": df["Fair Value"].sum()}, ignore_index=True)
+        cashflow_df = cashflow_df.groupby("Date")["Cash Flow"].sum().sort_index()
 
-        if len(cashflow_series) >= 2:
-            irr = npf.irr(cashflow_series)
-            irr_display = f"{irr * 100:.2f}%" if irr is not None else "N/A"
-        else:
-            irr_display = "Insufficient data"
+        irr = npf.irr(cashflow_df.values) if len(cashflow_df) >= 2 else np.nan
+        irr_display = f"{irr * 100:.2f}%" if not np.isnan(irr) else "N/A"
 
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Total Amount Invested", f"${df['Cost'].sum():,.2f}")
@@ -105,8 +105,13 @@ if uploaded_file:
         fig = px.line(timeline, x="Date", y=["Cost", "Fair Value"], markers=True)
         st.plotly_chart(fig, use_container_width=True)
 
-        st.markdown("### 📊 MOIC Distribution")
-        fig2 = px.histogram(df, x="MOIC", nbins=20, title="Distribution of MOIC across Investments")
+        st.markdown("### 📊 MOIC by Fund")
+        moic_fund = df.groupby("Fund Name").agg({"Cost": "sum", "Fair Value": "sum"}).reset_index()
+        moic_fund["MOIC"] = moic_fund["Fair Value"] / moic_fund["Cost"]
+        fig2 = px.bar(moic_fund.sort_values("MOIC", ascending=False), x="Fund Name", y="MOIC", text="MOIC",
+                      title="MOIC by Fund (Weighted by Total Cost)", labels={"MOIC": "MOIC"})
+        fig2.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+        fig2.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
         st.plotly_chart(fig2, use_container_width=True)
 
         st.markdown("---")
