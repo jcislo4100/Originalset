@@ -21,7 +21,9 @@ if uploaded_file:
         df = pd.read_excel(uploaded_file, sheet_name=sheet_names[0], header=None)
 
         headers = df.iloc[1].astype(str).values
-        if any("Account Name" in h for h in headers):
+        is_salesforce = any("Account Name" in h for h in headers)
+
+        if is_salesforce:
             df.columns = df.iloc[1]
             df = df[2:].copy()
             df = df.rename(columns={
@@ -40,6 +42,7 @@ if uploaded_file:
             df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
             df = df.dropna(subset=["Date"])
             df["Fund Name"] = df["Parent Account"] if "Parent Account" in df.columns else "Salesforce Import"
+
         else:
             df = pd.read_excel(uploaded_file, sheet_name=sheet_names[0])
             possible_date_columns = [col for col in df.columns if isinstance(col, str) and ("date" in col.lower() or "year" in col.lower())]
