@@ -18,14 +18,13 @@ if uploaded_file:
         xls = pd.ExcelFile(uploaded_file)
         sheet_names = xls.sheet_names
 
-        df = pd.read_excel(uploaded_file, sheet_name=sheet_names[0], header=None)
-
-        headers = df.iloc[1].astype(str).values
+        df_raw = pd.read_excel(uploaded_file, sheet_name=sheet_names[0], header=None)
+        headers = df_raw.iloc[1].astype(str).values
         is_salesforce = any("Account Name" in h for h in headers)
 
         if is_salesforce:
-            df.columns = df.iloc[1]
-            df = df[2:].copy()
+            df_raw.columns = df_raw.iloc[1]
+            df = df_raw[2:].copy()
             df = df.rename(columns={
                 "Account Name": "Investment Name",
                 "Total Investment": "Cost",
@@ -58,6 +57,7 @@ if uploaded_file:
                 st.stop()
             df = df.dropna(subset=["Date"])
 
+        # ---- CONTINUE ANALYSIS ----
         df["MOIC"] = df["Fair Value"] / df["Cost"]
 
         with st.sidebar:
