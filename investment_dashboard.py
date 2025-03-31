@@ -6,6 +6,7 @@ import numpy as np
 import numpy_financial as npf
 import plotly.express as px
 from datetime import datetime
+import io
 
 st.set_page_config(layout="wide")
 st.title("📈 Investment Performance Dashboard")
@@ -90,6 +91,44 @@ if uploaded_file:
             st.markdown("### 📊 MOIC Distribution")
             fig2 = px.histogram(df, x="MOIC", nbins=20, title="Distribution of MOIC across Investments")
             st.plotly_chart(fig2, use_container_width=True)
+
+            # ---- PORTFOLIO INSIGHTS ----
+            st.markdown("---")
+            st.subheader("🧠 Portfolio Insights")
+
+            top_moic = df.sort_values("MOIC", ascending=False).head(5)
+            low_moic = df[df["MOIC"] < 1.0]
+            unrealized_pct = df[df["Proceeds"] == 0].shape[0] / df.shape[0] * 100
+            avg_holding_period = (datetime.now() - df["Date"]).dt.days.mean() / 365
+
+            st.markdown(f"**Top 5 Investments by MOIC**")
+            st.dataframe(top_moic[["Investment Name", "MOIC", "Fair Value"]])
+
+            st.markdown(f"**Investments below 1.0x MOIC:** {low_moic.shape[0]} ({(low_moic.shape[0]/df.shape[0])*100:.1f}%)")
+            st.markdown(f"**% of Unrealized Investments:** {unrealized_pct:.1f}%")
+            st.markdown(f"**Avg. Holding Period:** {avg_holding_period:.2f} years")
+
+            # ---- IRR OVER TIME ----
+            st.markdown("### 📉 IRR Over Time")
+            if "Gross IRR" in sheet_names:
+                irr_df = pd.read_excel(uploaded_file, sheet_name="Gross IRR")
+                irr_df["Date"] = pd.to_datetime(dict(year=irr_df["Snapshot Date (Year)"], month=irr_df["Snapshot Date (Month)"], day=1))
+                fig3 = px.line(irr_df, x="Date", y="Gross IRR", title="Gross IRR Trend", markers=True)
+                st.plotly_chart(fig3, use_container_width=True)
+            else:
+                st.warning("No 'Gross IRR' sheet found to plot IRR trend.")
+
+            # ---- EXPORT TO CSV ----
+            st.markdown("---")
+            st.subheader("📤 Export")
+            csv_buffer = io.StringIO()
+            df.to_csv(csv_buffer, index=False)
+            st.download_button(
+                label="Download Portfolio Table as CSV",
+                data=csv_buffer.getvalue(),
+                file_name="portfolio_summary.csv",
+                mime="text/csv"
+            )
 
     except Exception as e:
         st.error(f"Error loading file: {e}")
