@@ -18,11 +18,11 @@ if uploaded_file:
         xls = pd.ExcelFile(uploaded_file)
         sheet_names = xls.sheet_names
 
-        # Load based on file structure (Salesforce vs Aduro-style)
         df = pd.read_excel(uploaded_file, sheet_name=sheet_names[0], header=None)
 
-        # Detect Salesforce format
-        if "Account Name" in df.iloc[1].values:
+        # Safer detection of Salesforce-style format
+        headers = df.iloc[1].astype(str).values
+        if any("Account Name" in h for h in headers):
             df.columns = df.iloc[1]
             df = df[2:].copy()
             df = df.rename(columns={
@@ -34,14 +34,13 @@ if uploaded_file:
             })
             df["Cost"] = pd.to_numeric(df["Cost"], errors="coerce")
             df["Fair Value"] = pd.to_numeric(df["Fair Value"], errors="coerce")
-            df["Proceeds"] = pd.to_numeric(df["Proceeds"], errors="coerce").fillna(0)
+            df["Proceeds"] = pd.to_numeric(df.get("Proceeds", 0), errors="coerce").fillna(0)
             df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
             df = df.dropna(subset=["Date"])
             df["Fund Name"] = df["Parent Account"] if "Parent Account" in df.columns else "Salesforce Import"
         else:
             df = pd.read_excel(uploaded_file, sheet_name=sheet_names[0])
-            # Identify a date column
-            possible_date_columns = [col for col in df.columns if "date" in col.lower() or "year" in col.lower()]
+            possible_date_columns = [col for col in df.columns if isinstance(col, str) and ("date" in col.lower() or "year" in col.lower())]
             for col in possible_date_columns:
                 try:
                     df["Date"] = pd.to_datetime(df[col], errors="coerce")
@@ -64,7 +63,6 @@ if uploaded_file:
                 (df["Date"].dt.year <= year_range[1]) &
                 (df["MOIC"] >= min_moic) & (df["MOIC"] <= max_moic)]
 
-        # ---- IRR CALC ----
         irr_data = df[["Date", "Cost", "Proceeds", "Fair Value"]].copy()
         irr_data["Outflow"] = -irr_data["Cost"]
         irr_data["Inflow"] = irr_data["Proceeds"] + irr_data["Fair Value"]
@@ -88,7 +86,6 @@ if uploaded_file:
         st.subheader("📊 MOIC by Investment")
         st.dataframe(df[["Investment Name", "Fund Name", "Cost", "Fair Value", "MOIC"]].sort_values("MOIC", ascending=False))
 
-        # ---- CHARTS ----
         st.markdown("### 📈 Value vs. Cost Over Time")
         timeline = df.groupby("Date").agg({"Cost": "sum", "Fair Value": "sum"}).sort_index().cumsum().reset_index()
         fig = px.line(timeline, x="Date", y=["Cost", "Fair Value"], markers=True)
@@ -98,7 +95,6 @@ if uploaded_file:
         fig2 = px.histogram(df, x="MOIC", nbins=20, title="Distribution of MOIC across Investments")
         st.plotly_chart(fig2, use_container_width=True)
 
-        # ---- PORTFOLIO INSIGHTS ----
         st.markdown("---")
         st.subheader("🧠 Portfolio Insights")
 
@@ -114,7 +110,6 @@ if uploaded_file:
         st.markdown(f"**% of Unrealized Investments:** {unrealized_pct:.1f}%")
         st.markdown(f"**Avg. Holding Period:** {avg_holding_period:.2f} years")
 
-        # ---- EXPORT TO CSV ----
         st.markdown("---")
         st.subheader("📤 Export")
         csv_buffer = io.StringIO()
