@@ -99,7 +99,7 @@ if uploaded_file is not None:
             col1, col2, col3, col4, col5 = st.columns(5)
             col1.metric("Total Amount Invested", format_currency(total_invested), help="Sum of all capital deployed across filtered investments.")
             col2.metric("Total Fair Value", format_currency(total_fair_value), help="Current estimated value of all filtered investments.")
-            col3.metric("Portfolio MOIC", format_multiple(portfolio_moic), help="Multiple on Invested Capital (Fair Value / Cost)")")
+            col3.metric("Portfolio MOIC", format_multiple(portfolio_moic), help="Multiple on Invested Capital (Fair Value / Cost)")
             col4.metric("Portfolio-Level ROI", format_percent(portfolio_annualized_roi, 1), help="Annualized return across all investments, weighted by capital")
 
             realized_df = df_filtered[df_filtered["Realized / Unrealized"] == "realized"] if "Realized / Unrealized" in df_filtered.columns else pd.DataFrame()
