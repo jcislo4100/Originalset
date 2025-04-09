@@ -31,6 +31,63 @@ st.title(":bar_chart: Investment Performance Dashboard")
 
 uploaded_file = st.file_uploader("Upload Investment Excel", type=["xlsx"])
 
+# Optional: Add investment manually through form
+st.markdown("---")
+st.subheader("➕ Manually Add an Investment")
+
+with st.form("add_investment_form"):
+    col1, col2 = st.columns(2)
+    with col1:
+        company = st.text_input("Portfolio Company")
+        fund = st.selectbox("Fund Name", ["Fund I", "Fund II", "Fund III"])
+        date = st.date_input("Investment Date")
+        stage = st.selectbox("Stage", ["Venture", "Growth", "Buyout"])
+        sector = st.text_input("Sector")
+        geography = st.text_input("Geography")
+    with col2:
+        cost = st.number_input("Total Investment ($)", min_value=0)
+        fair_value = st.number_input("Fair Value ($)", min_value=0)
+        realized_value = st.number_input("Realized Value ($)", min_value=0)
+        exit_date = st.date_input("Exit Date", value=None)
+        status = st.selectbox("Status", ["Realized", "Unrealized"])
+        irr = st.number_input("IRR (net)", min_value=0.0, max_value=1.0, step=0.01)
+        ownership = st.number_input("Ownership %", min_value=0.0, max_value=1.0, step=0.01)
+    notes = st.text_area("Notes")
+
+    submitted = st.form_submit_button("Add Investment")
+
+    if submitted:
+        new_entry = pd.DataFrame([{
+            "Portfolio Company": company,
+            "Fund Name": fund,
+            "Investment Date": pd.to_datetime(date),
+            "Stage": stage,
+            "Sector": sector,
+            "Geography": geography,
+            "Total Investment": cost,
+            "Fair Value": fair_value,
+            "Realized Value": realized_value,
+            "Exit Date": pd.to_datetime(exit_date) if exit_date else pd.NaT,
+            "Status": status,
+            "IRR (net)": irr,
+            "Ownership %": ownership,
+            "Notes": notes
+        }])
+
+        # Rename columns to match expected format
+        new_entry.rename(columns={
+            "Portfolio Company": "Investment Name",
+            "Investment Date": "Date",
+            "Total Investment": "Cost"
+        }, inplace=True)
+
+        if "manual_entries" not in st.session_state:
+            st.session_state.manual_entries = new_entry.copy()
+        else:
+            st.session_state.manual_entries = pd.concat([st.session_state.manual_entries, new_entry], ignore_index=True)
+
+        st.success("✅ Investment added to session. It will be included in this dashboard session.")
+
 # Realized / Unrealized filter
 st.markdown("### :mag: Filter Investments")
 realization_options = ["All", "Realized", "Unrealized"]
@@ -147,14 +204,25 @@ if uploaded_file is not None:
 
             if not search_term:
                 st.subheader(":bar_chart: Cost Basis vs Fair Value Since Inception")
-                chart_mode = st.selectbox("Chart Mode", ["Cumulative", "Monthly Deployed"], index=0)
+                chart_mode = st.selectbox("Chart Mode", ["Cumulative", "Monthly Deployed"])
+date_grouping = st.selectbox("Group Dates By", ["Monthly", "Quarterly", "Yearly"], index=0)
                 if chart_mode == "Cumulative":
-                    df_filtered["Date Group"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
+                    if date_grouping == "Monthly":
+    df_filtered["Date Group"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
+elif date_grouping == "Quarterly":
+    df_filtered["Date Group"] = df_filtered["Date"].dt.to_period("Q").dt.to_timestamp()
+else:
+    df_filtered["Date Group"] = df_filtered["Date"].dt.to_period("Y").dt.to_timestamp()
                     cost_value_df = df_filtered.groupby("Date Group")[["Cost", "Fair Value"]].sum().sort_index().cumsum().reset_index()
                     fig_cost_value = px.line(cost_value_df, x="Date Group", y=["Cost", "Fair Value"], title="Cumulative Cost vs Fair Value Over Time", )
                     st.plotly_chart(fig_cost_value, use_container_width=True)
                 else:
-                    df_filtered["Month"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
+                    if date_grouping == "Monthly":
+    df_filtered["Month"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
+elif date_grouping == "Quarterly":
+    df_filtered["Month"] = df_filtered["Date"].dt.to_period("Q").dt.to_timestamp()
+else:
+    df_filtered["Month"] = df_filtered["Date"].dt.to_period("Y").dt.to_timestamp()
                     monthly_df = df_filtered.groupby("Month")["Cost"].sum().reset_index()
                     fig_deployed = px.bar(monthly_df, x="Month", y="Cost", title="Monthly Deployed", )
                     st.plotly_chart(fig_deployed, use_container_width=True)
