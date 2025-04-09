@@ -139,7 +139,7 @@ if uploaded_file is not None:
 fig3 = px.pie(pie_df, names="Fund Name", values="Cost", title="Capital Invested per Fund")
 st.plotly_chart(fig3, use_container_width=True)
 
-            if "Stage" in df_filtered.columns:
+if "Stage" in df_filtered.columns:
                 st.subheader(":dna: Investments by Stage")
                 stage_df = df_filtered.groupby("Stage")["Cost"].sum().reset_index()
                 fig4 = px.pie(stage_df, names="Stage", values="Cost", title="Investments by Stage")
