@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import numpy_financial as npf
 import plotly.express as px
+px.defaults.template = "plotly_white"
 from datetime import datetime
 from fpdf import FPDF
 import io
@@ -106,7 +107,7 @@ if uploaded_file is not None:
             st.subheader(":bar_chart: Portfolio MOIC by Fund")
             moic_by_fund = df_filtered.groupby("Fund Name").apply(lambda x: x["Fair Value"].sum() / x["Cost"].sum()).reset_index(name="Portfolio MOIC")
             moic_by_fund["MOIC Label"] = moic_by_fund["Portfolio MOIC"].round(2).astype(str) + "x"
-            fig1 = px.bar(moic_by_fund, x="Fund Name", y="Portfolio MOIC", title="MOIC per Fund", text="MOIC Label", color_discrete_sequence=["#B1874C"] * len(moic_by_fund))
+            fig1 = px.bar(moic_by_fund, x="Fund Name", y="Portfolio MOIC", title="MOIC per Fund", text="MOIC Label")
             st.plotly_chart(fig1, use_container_width=True)
 
             st.subheader(":chart_with_upwards_trend: Annualized ROI by Fund")
@@ -119,21 +120,19 @@ if uploaded_file is not None:
                 x="Fund Name",
                 y="Weighted Annualized ROI",
                 title="Weighted Annualized ROI per Fund",
-                text="Annualized ROI Label",
-                color_discrete_sequence=["#B1874C"] * len(roi_fund)
+                text="Annualized ROI Label"
             )
             st.plotly_chart(fig2, use_container_width=True)
 
             st.subheader(":moneybag: Capital Allocation by Fund")
             pie_df = df_filtered.groupby("Fund Name")["Cost"].sum().reset_index()
-            gold_shades = ["#A67B43", "#BA905C", "#CEA574", "#E3BA8D", "#F7CFA5", "#FCE9D2", "#FFF5EA"]
-            fig3 = px.pie(pie_df, names="Fund Name", values="Cost", title="Capital Invested per Fund", color_discrete_sequence=gold_shades[:len(pie_df)])
+                        fig3 = px.pie(pie_df, names="Fund Name", values="Cost", title="Capital Invested per Fund")
             st.plotly_chart(fig3, use_container_width=True)
 
             if "Stage" in df_filtered.columns:
                 st.subheader(":dna: Investments by Stage")
                 stage_df = df_filtered.groupby("Stage")["Cost"].sum().reset_index()
-                fig4 = px.pie(stage_df, names="Stage", values="Cost", title="Investments by Stage", color_discrete_sequence=gold_shades[:len(stage_df)])
+                fig4 = px.pie(stage_df, names="Stage", values="Cost", title="Investments by Stage")
                 st.plotly_chart(fig4, use_container_width=True)
 
             if not search_term:
@@ -142,12 +141,12 @@ if uploaded_file is not None:
                 if chart_mode == "Cumulative":
                     df_filtered["Date Group"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
                     cost_value_df = df_filtered.groupby("Date Group")[["Cost", "Fair Value"]].sum().sort_index().cumsum().reset_index()
-                    fig_cost_value = px.line(cost_value_df, x="Date Group", y=["Cost", "Fair Value"], title="Cumulative Cost vs Fair Value Over Time", color_discrete_sequence=["#B1874C", "#D4B885"])
+                    fig_cost_value = px.line(cost_value_df, x="Date Group", y=["Cost", "Fair Value"], title="Cumulative Cost vs Fair Value Over Time", )
                     st.plotly_chart(fig_cost_value, use_container_width=True)
                 else:
                     df_filtered["Month"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
                     monthly_df = df_filtered.groupby("Month")["Cost"].sum().reset_index()
-                    fig_deployed = px.bar(monthly_df, x="Month", y="Cost", title="Monthly Deployed", color_discrete_sequence=["#B1874C"])
+                    fig_deployed = px.bar(monthly_df, x="Month", y="Cost", title="Monthly Deployed", )
                     st.plotly_chart(fig_deployed, use_container_width=True)
             else:
                 st.subheader(":bar_chart: Cost vs Fair Value (Filtered View)")
@@ -163,7 +162,7 @@ if uploaded_file is not None:
                     color="Metric",
                     barmode="group",
                     title="Cost vs Fair Value for Selected Investments",
-                    color_discrete_sequence=["#B1874C", "#D4B885"]
+                    
                 )
                 st.plotly_chart(fig_bar_filtered, use_container_width=True)
 
@@ -253,9 +252,9 @@ if uploaded_file is not None:
 
                 buffer_dir = tempfile.mkdtemp()
                 chart_paths = []
-                chart_titles = ["MOIC by Fund", "Annualized ROI by Fund", "Capital Allocation", "Stage Breakdown", "Cost vs Fair Value Over Time", "Investment HQ Map"]
+                chart_titles = ["MOIC by Fund", "Annualized ROI by Fund", "Capital Allocation", "Stage Breakdown", "Cost vs Fair Value Over Time" ]
 
-                figs = [fig1, fig2, fig3, fig4 if 'fig4' in locals() else None, fig_cost_value if 'fig_cost_value' in locals() else None, fig_map if 'fig_map' in locals() else None]
+                figs = [fig1, fig2, fig3, fig4 if 'fig4' in locals() else None, fig_cost_value if 'fig_cost_value' in locals() else None]
 
                 for i, fig in enumerate(figs):
                     if fig:
