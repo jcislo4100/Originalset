@@ -4,3 +4,5 @@ numpy-financial>=1.0
 plotly>=5.15
 openpyxl>=3.1
 streamlit>=1.30
+fpdf==1.7.2
+kaleido
