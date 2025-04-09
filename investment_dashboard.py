@@ -203,26 +203,16 @@ if uploaded_file is not None:
                 st.plotly_chart(fig4, use_container_width=True)
 
             if not search_term:
-                st.subheader(":bar_chart: Cost Basis vs Fair Value Since Inception")
-                chart_mode = st.selectbox("Chart Mode", ["Cumulative", "Monthly Deployed"])
-date_grouping = st.selectbox("Group Dates By", ["Monthly", "Quarterly", "Yearly"], index=0)
-                if chart_mode == "Cumulative":
-                    if date_grouping == "Monthly":
-    df_filtered["Date Group"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
-elif date_grouping == "Quarterly":
-    df_filtered["Date Group"] = df_filtered["Date"].dt.to_period("Q").dt.to_timestamp()
-else:
-    df_filtered["Date Group"] = df_filtered["Date"].dt.to_period("Y").dt.to_timestamp()
-                    cost_value_df = df_filtered.groupby("Date Group")[["Cost", "Fair Value"]].sum().sort_index().cumsum().reset_index()
-                    fig_cost_value = px.line(cost_value_df, x="Date Group", y=["Cost", "Fair Value"], title="Cumulative Cost vs Fair Value Over Time", )
-                    st.plotly_chart(fig_cost_value, use_container_width=True)
-                else:
-                    if date_grouping == "Monthly":
-    df_filtered["Month"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
-elif date_grouping == "Quarterly":
-    df_filtered["Month"] = df_filtered["Date"].dt.to_period("Q").dt.to_timestamp()
-else:
-    df_filtered["Month"] = df_filtered["Date"].dt.to_period("Y").dt.to_timestamp()
+    st.subheader(":bar_chart: Cost Basis vs Fair Value Since Inception")
+    chart_mode = st.selectbox("Chart Mode", ["Cumulative", "Monthly Deployed"])
+    date_grouping = st.selectbox("Group Dates By", ["Monthly", "Quarterly", "Yearly"], index=0)
+    if chart_mode == "Cumulative":
+                                    if date_grouping == "Monthly":
+            df_filtered["Month"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
+        elif date_grouping == "Quarterly":
+            df_filtered["Month"] = df_filtered["Date"].dt.to_period("Q").dt.to_timestamp()
+        else:
+            df_filtered["Month"] = df_filtered["Date"].dt.to_period("Y").dt.to_timestamp()
                     monthly_df = df_filtered.groupby("Month")["Cost"].sum().reset_index()
                     fig_deployed = px.bar(monthly_df, x="Month", y="Cost", title="Monthly Deployed", )
                     st.plotly_chart(fig_deployed, use_container_width=True)
