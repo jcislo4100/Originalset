@@ -32,7 +32,7 @@ st.title(":bar_chart: Investment Performance Dashboard")
 uploaded_file = st.file_uploader("Upload Investment Excel", type=["xlsx"])
 
 # --- Manual Entry Form ---
-st.markdown("### Or Enter Investment Manually")
+with st.expander("➕ Add Investment Manually", expanded=True):
 if "manual_entries" not in st.session_state:
     st.session_state.manual_entries = []
 
@@ -59,6 +59,12 @@ if submitted:
     }
     st.session_state.manual_entries.append(new_entry)
     st.success(f"Added investment: {investment_name}")
+    if st.session_state.manual_entries:
+        st.markdown("#### Manually Added Investments")
+        st.dataframe(pd.DataFrame(st.session_state.manual_entries))
+    if st.button("🧹 Clear Manual Entries"):
+        st.session_state.manual_entries = []
+        st.success("Manual entries cleared.")
 
 # Realized / Unrealized filter
 st.markdown("### :mag: Filter Investments")
