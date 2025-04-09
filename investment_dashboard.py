@@ -33,10 +33,10 @@ uploaded_file = st.file_uploader("Upload Investment Excel", type=["xlsx"])
 
 # --- Manual Entry Form ---
 with st.expander("➕ Add Investment Manually", expanded=True):
-if "manual_entries" not in st.session_state:
+    if "manual_entries" not in st.session_state:
     st.session_state.manual_entries = []
 
-with st.form("manual_form"):
+    with st.form("manual_form"):
     col1, col2 = st.columns(2)
     with col1:
         investment_name = st.text_input("Investment Name")
@@ -48,7 +48,7 @@ with st.form("manual_form"):
         status = st.selectbox("Realized / Unrealized", ["Unrealized", "Realized"])
     submitted = st.form_submit_button("Add Investment")
 
-if submitted:
+    if submitted:
     new_entry = {
         "Investment Name": investment_name,
         "Fund Name": fund_name,
@@ -59,10 +59,10 @@ if submitted:
     }
     st.session_state.manual_entries.append(new_entry)
     st.success(f"Added investment: {investment_name}")
-    if st.session_state.manual_entries:
+            if st.session_state.manual_entries:
         st.markdown("#### Manually Added Investments")
         st.dataframe(pd.DataFrame(st.session_state.manual_entries))
-    if st.button("🧹 Clear Manual Entries"):
+            if st.button("🧹 Clear Manual Entries"):
         st.session_state.manual_entries = []
         st.success("Manual entries cleared.")
 
