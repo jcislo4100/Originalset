@@ -136,7 +136,7 @@ if uploaded_file is not None:
 
             st.subheader(":moneybag: Capital Allocation by Fund")
             pie_df = df_filtered.groupby("Fund Name")["Cost"].sum().reset_index()
-                        fig3 = px.pie(pie_df, names="Fund Name", values="Cost", title="Capital Invested per Fund")
+fig3 = px.pie(pie_df, names="Fund Name", values="Cost", title="Capital Invested per Fund")
             st.plotly_chart(fig3, use_container_width=True)
 
             if "Stage" in df_filtered.columns:
