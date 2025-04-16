@@ -80,7 +80,7 @@ with st.expander("➕ Add Investment Manually", expanded=True):
             st.success("Manual entries cleared.")
     st.session_state.manual_entries.append(new_entry)
     st.success(f"Added investment: {investment_name}")
-            if st.session_state.manual_entries:
+        if st.session_state.manual_entries:
         st.markdown("#### Manually Added Investments")
         st.dataframe(pd.DataFrame(st.session_state.manual_entries))
             if st.button("🧹 Clear Manual Entries"):
